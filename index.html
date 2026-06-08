@@ -1,0 +1,1484 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>品牌羽绒服订货会 MVP</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #171717;
+      --muted: #6d6a64;
+      --line: #ded8cf;
+      --paper: #f6f1e9;
+      --panel: #fffaf2;
+      --accent: #a43e2b;
+      --accent-2: #1f6b63;
+      --gold: #b58445;
+      --deep: #25211d;
+      --shadow: 0 18px 45px rgba(45, 36, 27, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px clamp(18px, 4vw, 56px);
+      border-bottom: 1px solid rgba(40, 32, 24, .12);
+      background: rgba(246, 241, 233, .92);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 190px;
+    }
+
+    .brand strong {
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .nav button, .ghost-btn, .primary-btn, .icon-btn {
+      border: 1px solid var(--line);
+      background: #fffaf4;
+      color: var(--deep);
+      border-radius: 8px;
+      padding: 10px 14px;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .nav button.active, .primary-btn {
+      border-color: var(--deep);
+      background: var(--deep);
+      color: #fff;
+    }
+
+    .nav button:hover, .ghost-btn:hover, .primary-btn:hover, .icon-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--deep);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+      gap: clamp(24px, 5vw, 72px);
+      align-items: end;
+      padding: clamp(36px, 7vw, 88px) clamp(18px, 5vw, 72px) 34px;
+      background:
+        linear-gradient(120deg, rgba(164, 62, 43, .12), transparent 34%),
+        linear-gradient(300deg, rgba(31, 107, 99, .10), transparent 42%),
+        var(--paper);
+    }
+
+    .hero h1 {
+      margin: 0 0 16px;
+      font-size: clamp(34px, 6.2vw, 82px);
+      line-height: .96;
+      max-width: 850px;
+      font-weight: 800;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: #514b44;
+      font-size: clamp(15px, 1.7vw, 20px);
+      line-height: 1.75;
+    }
+
+    .hero-panel {
+      border-left: 1px solid rgba(37, 33, 29, .18);
+      padding-left: clamp(18px, 3vw, 42px);
+    }
+
+    .hero-panel dl {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin: 0;
+    }
+
+    .hero-panel dt {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .hero-panel dd {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .wrap {
+      padding: 28px clamp(16px, 4vw, 56px) 80px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .search, .select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf4;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 26px 0 18px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 36px);
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 740px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(40, 32, 24, .14);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(45, 36, 27, .08);
+      min-width: 0;
+    }
+
+    .image-box {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      background: #e9e0d4;
+      overflow: hidden;
+    }
+
+    .image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255, 250, 242, .92);
+      color: var(--deep);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(37, 33, 29, .12);
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .code {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .price {
+      white-space: nowrap;
+      color: var(--accent);
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .desc {
+      color: #514b44;
+      line-height: 1.65;
+      margin: 10px 0 12px;
+      min-height: 78px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 10px 0 14px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 9px;
+      background: rgba(255, 255, 255, .48);
+      color: #4d4842;
+      font-size: 12px;
+    }
+
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 14px;
+    }
+
+    .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 12px;
+      background: #fffaf4;
+    }
+
+    .dot {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, .22);
+      flex: 0 0 auto;
+    }
+
+    .order-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr 74px;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .order-box select, .order-box input, .feedback textarea, .client-form input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fffdf8;
+      min-width: 0;
+    }
+
+    .feedback {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .feedback textarea {
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .card-actions button {
+      flex: 1;
+    }
+
+    .drawer {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 30;
+      width: min(420px, calc(100vw - 36px));
+      max-height: calc(100vh - 36px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      background: #fffaf2;
+      border: 1px solid rgba(40, 32, 24, .18);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transform: translateY(calc(100% + 28px));
+      transition: transform .24s ease;
+    }
+
+    .drawer.open { transform: translateY(0); }
+
+    .drawer-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .drawer-head strong { font-size: 18px; }
+
+    .cart-list {
+      overflow: auto;
+      padding: 12px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .cart-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fffdf8;
+    }
+
+    .cart-item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .cart-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .drawer-foot {
+      padding: 14px 16px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .client-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .client-form input:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      color: var(--deep);
+      font-weight: 800;
+    }
+
+    .admin {
+      display: none;
+    }
+
+    .admin.active {
+      display: block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: #fffaf2;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 28px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: #fffaf2;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    th {
+      background: #efe5d7;
+      color: var(--deep);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .notice {
+      margin: 16px 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(31, 107, 99, .25);
+      border-radius: 8px;
+      background: rgba(31, 107, 99, .08);
+      color: #24544f;
+      line-height: 1.6;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 50;
+      transform: translate(-50%, 18px);
+      opacity: 0;
+      background: var(--deep);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .watermark-layer {
+      position: fixed;
+      inset: -20%;
+      z-index: 45;
+      pointer-events: none;
+      opacity: .12;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 36px;
+      transform: rotate(-18deg);
+      color: #1f1a16;
+      font-weight: 800;
+      font-size: clamp(16px, 2vw, 26px);
+      line-height: 1.45;
+      mix-blend-mode: multiply;
+    }
+
+    .watermark-layer span {
+      white-space: pre-line;
+      min-height: 110px;
+    }
+
+    .privacy-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      background: #f6f1e9;
+      color: var(--deep);
+      text-align: center;
+      padding: 28px;
+    }
+
+    .privacy-mask strong {
+      display: block;
+      font-size: clamp(26px, 4vw, 48px);
+      margin-bottom: 12px;
+    }
+
+    .privacy-mask p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    body.masked .privacy-mask {
+      display: grid;
+    }
+
+    body.masked .topbar,
+    body.masked main,
+    body.masked .drawer,
+    body.masked .toast {
+      filter: blur(28px);
+      opacity: 0;
+    }
+
+    .access-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background:
+        linear-gradient(130deg, rgba(164, 62, 43, .14), transparent 34%),
+        linear-gradient(310deg, rgba(31, 107, 99, .12), transparent 40%),
+        var(--paper);
+    }
+
+    .access-card {
+      width: min(520px, 100%);
+      background: #fffaf2;
+      border: 1px solid rgba(40, 32, 24, .16);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: clamp(22px, 5vw, 38px);
+    }
+
+    .access-card h2 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.08;
+    }
+
+    .access-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .access-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .access-form input {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fffdf8;
+      text-transform: uppercase;
+    }
+
+    .access-help {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .client-chip {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .client-chip strong {
+      color: var(--deep);
+      font-size: 13px;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+
+      body::before {
+        content: "内部订货资料，禁止打印、截图和外传";
+        visibility: visible !important;
+        display: grid;
+        place-items: center;
+        position: fixed;
+        inset: 0;
+        background: #fff;
+        color: #111;
+        font-size: 28px;
+        font-weight: 800;
+      }
+    }
+
+    @media (max-width: 1120px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero { grid-template-columns: 1fr; }
+      .hero-panel { border-left: 0; padding-left: 0; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .nav { justify-content: flex-start; }
+      .toolbar { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .order-box { grid-template-columns: 1fr 1fr; }
+      .order-box input { grid-column: 1 / -1; }
+      .access-form { grid-template-columns: 1fr; }
+      .client-form { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <section class="access-gate" id="accessGate" aria-label="客户访问码">
+    <div class="access-card">
+      <h2>客户访问码</h2>
+      <p>请输入你的专属客户码进入订货会。进入后页面会自动加入客户水印，用于内部订货资料保护。</p>
+      <div class="access-form">
+        <input id="accessCodeInput" placeholder="例如：VIP001" autocomplete="off" />
+        <button class="primary-btn" type="button" id="accessSubmit">进入订货会</button>
+      </div>
+      <div class="access-help">
+        演示客户码：VIP001、VIP002、VIP003、VIP004。管理员码：ADMIN2026。
+      </div>
+    </div>
+  </section>
+  <div class="watermark-layer" id="watermarkLayer" aria-hidden="true"></div>
+  <div class="privacy-mask" aria-hidden="true">
+    <div>
+      <strong>内部订货资料已遮挡</strong>
+      <p>页面离开当前窗口、打印或疑似截图时会自动隐藏内容。回到页面后可继续浏览。</p>
+    </div>
+  </div>
+  <header class="topbar">
+    <div class="brand">
+      <strong>ARNO 女装羽绒订货会</strong>
+      <span>2026 秋冬客户选款系统 MVP</span>
+    </div>
+    <nav class="nav" aria-label="页面导航">
+      <button class="active" type="button" data-view="products">选款</button>
+      <button type="button" id="openCart">清单 <span id="cartCount">0</span></button>
+      <button type="button" data-view="admin">统计后台</button>
+    </nav>
+    <div class="client-chip" id="clientChip">当前客户：<strong id="clientChipText"></strong></div>
+  </header>
+
+  <main id="productsView">
+    <section class="hero">
+      <div>
+        <h1>品牌最新款订货会</h1>
+        <p>客户可以浏览款式、选择颜色尺码数量、填写款式意见并提交。你可以在统计后台看到热款、热色、客户反馈和预估订货金额。</p>
+      </div>
+      <aside class="hero-panel" aria-label="订货信息">
+        <dl>
+          <div><dt>系列</dt><dd>轻奢通勤羽绒</dd></div>
+          <div><dt>交期</dt><dd>45-60 天</dd></div>
+          <div><dt>起订</dt><dd>单色 30 件</dd></div>
+          <div><dt>后台</dt><dd>可导出表格</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="wrap">
+      <div class="section-title">
+        <div>
+          <h2>客户选款区</h2>
+          <p>第一版先用你的 lookbook 图片做样品库，产品文案和价格都集中在页面数据里，后面替换正式资料很快。</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="search" id="searchInput" type="search" placeholder="搜索款号、风格、颜色、卖点" />
+        <select class="select" id="styleFilter" aria-label="风格筛选">
+          <option value="">全部风格</option>
+        </select>
+        <select class="select" id="lengthFilter" aria-label="衣长筛选">
+          <option value="">全部衣长</option>
+          <option value="短款">短款</option>
+          <option value="中长款">中长款</option>
+          <option value="长款">长款</option>
+        </select>
+      </div>
+
+      <div class="grid" id="productGrid"></div>
+    </section>
+  </main>
+
+  <main id="adminView" class="admin wrap">
+    <div class="section-title">
+      <div>
+        <h2>统计后台</h2>
+        <p>这里先读取本页面收到的提交记录。接入 Google 表格后，客户从外部链接提交的数据也会进入统一后台。</p>
+      </div>
+      <div>
+        <button class="ghost-btn" type="button" id="exportCsv">导出表格</button>
+        <button class="ghost-btn" type="button" id="clearOrders">清空演示数据</button>
+      </div>
+    </div>
+
+    <div class="notice" id="backendNotice"></div>
+
+    <div class="stats-grid">
+      <div class="stat"><span>客户提交数</span><strong id="statOrders">0</strong></div>
+      <div class="stat"><span>预估件数</span><strong id="statUnits">0</strong></div>
+      <div class="stat"><span>预估金额</span><strong id="statAmount">¥0</strong></div>
+      <div class="stat"><span>反馈条数</span><strong id="statFeedback">0</strong></div>
+    </div>
+
+    <div class="section-title">
+      <h2>热款排行</h2>
+      <p>按客户选择数量汇总。</p>
+    </div>
+    <div class="table-wrap"><table id="rankTable"></table></div>
+
+    <div class="section-title">
+      <h2>客户提交明细</h2>
+      <p>包含客户信息、款式、颜色尺码数量和意见。</p>
+    </div>
+    <div class="table-wrap"><table id="orderTable"></table></div>
+  </main>
+
+  <aside class="drawer" id="cartDrawer" aria-label="选款清单">
+    <div class="drawer-head">
+      <strong>我的选款清单</strong>
+      <button class="icon-btn" type="button" id="closeCart">关闭</button>
+    </div>
+    <div class="cart-list" id="cartList"></div>
+    <div class="drawer-foot">
+      <div class="total-line"><span>预估合计</span><span id="cartTotal">¥0</span></div>
+      <div class="client-form">
+        <input id="clientName" placeholder="客户姓名" />
+        <input id="clientShop" placeholder="店铺/公司" />
+        <input id="clientContact" placeholder="电话/微信" />
+        <input id="clientCity" placeholder="城市" />
+        <input id="clientRemark" placeholder="整体意见，例如希望增加颜色、调价格、要现货" />
+      </div>
+      <button class="primary-btn" type="button" id="submitOrder">提交选款</button>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const BACKEND_ENDPOINT = "";
+    const IMAGE_BASE = "assets/lookbook/";
+    const ACCESS_CODES = {
+      VIP001: { name: "杭州形象客户", shop: "杭州女装集合店", contact: "VIP001", city: "杭州", role: "client" },
+      VIP002: { name: "上海订货客户", shop: "上海买手店", contact: "VIP002", city: "上海", role: "client" },
+      VIP003: { name: "成都订货客户", shop: "成都精品女装店", contact: "VIP003", city: "成都", role: "client" },
+      VIP004: { name: "北京订货客户", shop: "北京高端女装店", contact: "VIP004", city: "北京", role: "client" },
+      ADMIN2026: { name: "品牌管理员", shop: "ARNO", contact: "ADMIN2026", city: "总部", role: "admin" }
+    };
+
+    const products = [
+      {
+        id: "30MA03",
+        name: "披片袖短羽绒",
+        image: "30MA03.png",
+        price: 698,
+        style: "松弛都市",
+        length: "短款",
+        colors: [
+          ["黑色", "#161514"],
+          ["雾灰", "#9e9b94"],
+          ["奶油白", "#efe7d8"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "哑光尼龙面料 / 90 白鸭绒",
+        fill: "约 115g",
+        intro: "披肩感结构让基础短款更有造型，适合年轻通勤、直播间主推和搭配裙装裤装的日常场景。",
+        details: ["披片袖廓形", "高领防风", "短款显腿长", "轻量蓬松"]
+      },
+      {
+        id: "30MA09",
+        name: "立领收腰通勤羽绒",
+        image: "30MA09.png",
+        price: 728,
+        style: "利落通勤",
+        length: "短款",
+        colors: [
+          ["黑色", "#141414"],
+          ["深咖", "#4b3428"],
+          ["燕麦", "#d2c3ae"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "细斜纹防泼面料 / 90 白鸭绒",
+        fill: "约 130g",
+        intro: "强调腰线和肩颈比例，是最容易被客户理解的主销款，适合门店做黑色和浅中性色双备货。",
+        details: ["腰部抽绳", "立领保暖", "窄绗线", "显瘦版型"]
+      },
+      {
+        id: "30MA12",
+        name: "斗篷感廓形羽绒",
+        image: "30MA12.png",
+        price: 788,
+        style: "优雅廓形",
+        length: "中长款",
+        colors: [
+          ["象牙白", "#f1eadc"],
+          ["深灰", "#565756"],
+          ["橄榄绿", "#64705a"]
+        ],
+        sizes: ["S", "M", "L"],
+        material: "柔光聚酯纤维 / 90 白鸭绒",
+        fill: "约 155g",
+        intro: "把斗篷轮廓和羽绒保暖结合，视觉记忆点强，适合做形象款、橱窗款和小红书内容款。",
+        details: ["A 字摆量", "宽松袖笼", "隐藏门襟", "轻礼服感"]
+      },
+      {
+        id: "30MA14",
+        name: "大领口暖感羽绒",
+        image: "30MA14.png",
+        price: 758,
+        style: "温柔名媛",
+        length: "短款",
+        colors: [
+          ["奶茶", "#c4aa8c"],
+          ["酒红", "#7d2430"],
+          ["黑色", "#171514"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "柔雾面料 / 90 白鸭绒",
+        fill: "约 125g",
+        intro: "大领型自带围裹感，兼顾脸部修饰和保暖，适合成熟女装门店做高客单连带。",
+        details: ["大翻领", "收腰比例", "圆润肩线", "精致扣件"]
+      },
+      {
+        id: "30MA21",
+        name: "轻奢菱格短羽绒",
+        image: "30MA21.png",
+        price: 668,
+        style: "精致休闲",
+        length: "短款",
+        colors: [
+          ["珍珠白", "#efece4"],
+          ["煤灰", "#343434"],
+          ["浅卡其", "#bda98d"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "压纹防钻绒面料 / 90 白鸭绒",
+        fill: "约 110g",
+        intro: "菱格元素降低臃肿感，适合做轻薄羽绒和早冬主推，搭配半裙、牛仔裤都容易出效果。",
+        details: ["菱格压线", "短宽比例", "轻量感", "易搭配"]
+      },
+      {
+        id: "30MA23",
+        name: "圆领夹克式羽绒",
+        image: "30MA23.png",
+        price: 628,
+        style: "韩系简洁",
+        length: "短款",
+        colors: [
+          ["奶油", "#eadfce"],
+          ["雾粉", "#d6b7ac"],
+          ["黑色", "#171717"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "柔滑尼龙 / 90 白鸭绒",
+        fill: "约 105g",
+        intro: "圆领夹克化设计更像轻外套，适合南方市场、早冬和年轻客群，是走量友好款。",
+        details: ["圆领", "门襟暗扣", "短夹克", "低压绗线"]
+      },
+      {
+        id: "30MA27",
+        name: "中长腰带羽绒外套",
+        image: "30MA27.png",
+        price: 858,
+        style: "都市轻熟",
+        length: "中长款",
+        colors: [
+          ["黑色", "#141414"],
+          ["焦糖", "#a56c3c"],
+          ["暖灰", "#aaa295"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "高密防风面料 / 90 白鸭绒",
+        fill: "约 180g",
+        intro: "腰带解决中长羽绒显臃肿的问题，适合北方门店和通勤客群，客单价空间更高。",
+        details: ["同布腰带", "中长保暖", "高领门襟", "修身显瘦"]
+      },
+      {
+        id: "30MA33",
+        name: "宽松面包短羽绒",
+        image: "30MA33.png",
+        price: 638,
+        style: "街头松弛",
+        length: "短款",
+        colors: [
+          ["银灰", "#b9b8b3"],
+          ["黑色", "#111111"],
+          ["樱桃红", "#b02334"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "轻闪尼龙 / 90 白鸭绒",
+        fill: "约 135g",
+        intro: "面包服量感明显，适合做年轻流量款；用银灰和红色能提高页面点击和试穿率。",
+        details: ["蓬松量感", "落肩袖", "短宽廓形", "亮面可选"]
+      },
+      {
+        id: "30MA38",
+        name: "极简直筒羽绒",
+        image: "30MA38.png",
+        price: 798,
+        style: "极简高级",
+        length: "中长款",
+        colors: [
+          ["炭黑", "#202020"],
+          ["米灰", "#c9c0b2"],
+          ["海军蓝", "#253447"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "哑光记忆面料 / 90 白鸭绒",
+        fill: "约 165g",
+        intro: "直筒轮廓干净克制，适合做品牌基础高级款，图片表现稳定，门店复购风险低。",
+        details: ["直筒廓形", "隐藏拉链", "低调压线", "高兼容色"]
+      },
+      {
+        id: "30MA45",
+        name: "毛领派克羽绒",
+        image: "30MA45.png",
+        price: 928,
+        style: "保暖实穿",
+        length: "长款",
+        colors: [
+          ["军绿", "#5b6045"],
+          ["黑色", "#151515"],
+          ["沙色", "#c6b08e"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "防风棉感面料 / 90 白鸭绒",
+        fill: "约 245g",
+        intro: "派克元素更适合寒冷区域和实穿型客户，毛领、口袋、腰绳是推动成交的核心细节。",
+        details: ["可拆毛领", "大口袋", "腰部抽绳", "长款抗寒"]
+      },
+      {
+        id: "30MA49",
+        name: "连帽运动羽绒",
+        image: "30MA49-1.png",
+        price: 698,
+        style: "运动通勤",
+        length: "短款",
+        colors: [
+          ["黑色", "#111111"],
+          ["冰蓝", "#b8cbd8"],
+          ["白色", "#f2eee8"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "防泼水尼龙 / 90 白鸭绒",
+        fill: "约 140g",
+        intro: "连帽运动感强，适合年轻城市客和户外通勤趋势，可做功能性面料卖点。",
+        details: ["连帽", "防泼水", "袖口防风", "运动拉链"]
+      },
+      {
+        id: "30MA58",
+        name: "长款云朵羽绒服",
+        image: "30MA58-1.png",
+        price: 988,
+        style: "轻暖包裹",
+        length: "长款",
+        colors: [
+          ["暖白", "#eee4d5"],
+          ["石墨灰", "#4b4d4d"],
+          ["可可棕", "#7b5945"]
+        ],
+        sizes: ["S", "M", "L", "XL"],
+        material: "柔软防钻绒面料 / 90 白鸭绒",
+        fill: "约 260g",
+        intro: "长款包裹感强，是北方市场抗寒主力；浅色款更适合视觉传播，深色款负责实际走量。",
+        details: ["长款包裹", "轻量蓬松", "防风门襟", "高客单"]
+      }
+    ];
+
+    const productGrid = document.getElementById("productGrid");
+    const styleFilter = document.getElementById("styleFilter");
+    const lengthFilter = document.getElementById("lengthFilter");
+    const searchInput = document.getElementById("searchInput");
+    const cartDrawer = document.getElementById("cartDrawer");
+    const cartList = document.getElementById("cartList");
+    const cartCount = document.getElementById("cartCount");
+    const cartTotal = document.getElementById("cartTotal");
+    const toast = document.getElementById("toast");
+    let cart = [];
+    let currentVisitor = null;
+
+    const money = value => "¥" + Number(value || 0).toLocaleString("zh-CN");
+    const storageKey = "arno_order_mvp_orders";
+
+    function imageUrl(file) {
+      return IMAGE_BASE + file;
+    }
+
+    function getOrders() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function setOrders(orders) {
+      localStorage.setItem(storageKey, JSON.stringify(orders));
+    }
+
+    function getSavedVisitor() {
+      try {
+        return JSON.parse(sessionStorage.getItem("arno_order_mvp_visitor") || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function setSavedVisitor(visitor) {
+      sessionStorage.setItem("arno_order_mvp_visitor", JSON.stringify(visitor));
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function updateWatermark() {
+      const clientName = document.getElementById("clientName")?.value.trim();
+      const clientContact = document.getElementById("clientContact")?.value.trim();
+      const name = clientName || currentVisitor?.name || "ARNO 内部订货会";
+      const contact = clientContact || currentVisitor?.code || currentVisitor?.contact || "禁止截图外传";
+      const time = new Date().toLocaleDateString("zh-CN");
+      const text = `${name}\n${contact}\n${time}`;
+      document.getElementById("watermarkLayer").innerHTML = Array.from({ length: 32 }, () => `<span>${text}</span>`).join("");
+    }
+
+    function fillClientForm(visitor) {
+      document.getElementById("clientName").value = visitor.role === "admin" ? "" : visitor.name;
+      document.getElementById("clientShop").value = visitor.role === "admin" ? "" : visitor.shop;
+      document.getElementById("clientContact").value = visitor.role === "admin" ? "" : visitor.contact;
+      document.getElementById("clientCity").value = visitor.role === "admin" ? "" : visitor.city;
+    }
+
+    function applyVisitor(visitor) {
+      currentVisitor = visitor;
+      setSavedVisitor(visitor);
+      document.getElementById("accessGate").style.display = "none";
+      document.getElementById("clientChip").style.display = "inline-flex";
+      document.getElementById("clientChipText").textContent = `${visitor.name} / ${visitor.code}`;
+      fillClientForm(visitor);
+      updateWatermark();
+      const adminButton = document.querySelector('[data-view="admin"]');
+      adminButton.style.display = visitor.role === "admin" ? "" : "none";
+      if (visitor.role !== "admin") {
+        document.getElementById("adminView").classList.remove("active");
+        document.getElementById("productsView").style.display = "block";
+        document.querySelectorAll("[data-view]").forEach(button => button.classList.remove("active"));
+        document.querySelector('[data-view="products"]').classList.add("active");
+      }
+    }
+
+    function verifyAccessCode() {
+      const input = document.getElementById("accessCodeInput");
+      const code = input.value.trim().toUpperCase();
+      const visitor = ACCESS_CODES[code];
+      if (!visitor) {
+        showToast("访问码不正确");
+        input.focus();
+        return;
+      }
+      applyVisitor({ ...visitor, code });
+      showToast("已进入订货会");
+    }
+
+    function showPrivacyMask(duration = 1200) {
+      document.body.classList.add("masked");
+      window.clearTimeout(showPrivacyMask.timer);
+      showPrivacyMask.timer = window.setTimeout(() => {
+        if (document.visibilityState === "visible" && document.hasFocus()) {
+          document.body.classList.remove("masked");
+        }
+      }, duration);
+    }
+
+    function initFilters() {
+      const styles = [...new Set(products.map(item => item.style))].sort();
+      styles.forEach(style => {
+        const option = document.createElement("option");
+        option.value = style;
+        option.textContent = style;
+        styleFilter.appendChild(option);
+      });
+    }
+
+    function renderProducts() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const style = styleFilter.value;
+      const length = lengthFilter.value;
+      const filtered = products.filter(item => {
+        const haystack = [
+          item.id, item.name, item.style, item.length, item.material, item.intro,
+          item.colors.map(color => color[0]).join(" "), item.details.join(" ")
+        ].join(" ").toLowerCase();
+        return (!keyword || haystack.includes(keyword)) &&
+          (!style || item.style === style) &&
+          (!length || item.length === length);
+      });
+
+      productGrid.innerHTML = filtered.map(item => `
+        <article class="card" data-product="${item.id}">
+          <div class="image-box">
+            <img src="${imageUrl(item.image)}" alt="${item.name}" loading="lazy">
+            <span class="badge">${item.style}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-head">
+              <div>
+                <h3>${item.name}</h3>
+                <div class="code">款号 ${item.id} / ${item.length}</div>
+              </div>
+              <div class="price">${money(item.price)}</div>
+            </div>
+            <p class="desc">${item.intro}</p>
+            <div class="chips">
+              <span class="chip">${item.material}</span>
+              <span class="chip">${item.fill}</span>
+              ${item.details.map(detail => `<span class="chip">${detail}</span>`).join("")}
+            </div>
+            <div class="swatches">
+              ${item.colors.map(color => `<span class="swatch"><i class="dot" style="background:${color[1]}"></i>${color[0]}</span>`).join("")}
+            </div>
+            <div class="order-box">
+              <select data-role="color">${item.colors.map(color => `<option>${color[0]}</option>`).join("")}</select>
+              <select data-role="size">${item.sizes.map(size => `<option>${size}</option>`).join("")}</select>
+              <input data-role="qty" type="number" min="1" value="1" aria-label="数量">
+            </div>
+            <div class="feedback">
+              <textarea data-role="feedback" placeholder="对这个款的意见：颜色、领型、长度、价格、细节修改等"></textarea>
+            </div>
+            <div class="card-actions">
+              <button class="ghost-btn" type="button" data-action="add" data-id="${item.id}">加入清单</button>
+              <button class="primary-btn" type="button" data-action="quick" data-id="${item.id}">选这个款</button>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function readCardSelection(id) {
+      const product = products.find(item => item.id === id);
+      const card = document.querySelector(`[data-product="${id}"]`);
+      const color = card.querySelector('[data-role="color"]').value;
+      const size = card.querySelector('[data-role="size"]').value;
+      const qty = Math.max(1, Number(card.querySelector('[data-role="qty"]').value || 1));
+      const feedback = card.querySelector('[data-role="feedback"]').value.trim();
+      return {
+        lineId: `${id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        productId: product.id,
+        name: product.name,
+        style: product.style,
+        length: product.length,
+        price: product.price,
+        color,
+        size,
+        qty,
+        feedback
+      };
+    }
+
+    function addToCart(id, openCart) {
+      cart.push(readCardSelection(id));
+      renderCart();
+      showToast("已加入清单");
+      if (openCart) cartDrawer.classList.add("open");
+    }
+
+    function renderCart() {
+      cartCount.textContent = cart.reduce((sum, item) => sum + item.qty, 0);
+      const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      cartTotal.textContent = money(total);
+      if (!cart.length) {
+        cartList.innerHTML = `<p style="color:#6d6a64;line-height:1.7;margin:0;">还没有选择款式。你可以先从左侧加入清单。</p>`;
+        return;
+      }
+      cartList.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <strong>${item.productId} ${item.name}</strong>
+          <p>${item.color} / ${item.size} / ${item.qty} 件 / ${money(item.price * item.qty)}</p>
+          ${item.feedback ? `<p>意见：${item.feedback}</p>` : ""}
+          <button class="ghost-btn" type="button" data-remove="${item.lineId}" style="margin-top:8px;padding:7px 9px;">移除</button>
+        </div>
+      `).join("");
+    }
+
+    async function submitOrder() {
+      if (!cart.length) {
+        showToast("请先选择款式");
+        return;
+      }
+      const client = {
+        name: document.getElementById("clientName").value.trim(),
+        shop: document.getElementById("clientShop").value.trim(),
+        contact: document.getElementById("clientContact").value.trim(),
+        city: document.getElementById("clientCity").value.trim(),
+        remark: document.getElementById("clientRemark").value.trim(),
+        accessCode: currentVisitor?.code || ""
+      };
+      if (!client.name || !client.contact) {
+        showToast("请填写客户姓名和电话/微信");
+        return;
+      }
+      const order = {
+        orderId: "DH" + new Date().toISOString().replace(/\D/g, "").slice(0, 14),
+        createdAt: new Date().toLocaleString("zh-CN"),
+        visitorCode: currentVisitor?.code || "",
+        client,
+        items: cart,
+        totalUnits: cart.reduce((sum, item) => sum + item.qty, 0),
+        totalAmount: cart.reduce((sum, item) => sum + item.price * item.qty, 0)
+      };
+
+      const orders = getOrders();
+      orders.unshift(order);
+      setOrders(orders);
+
+      if (BACKEND_ENDPOINT) {
+        try {
+          await fetch(BACKEND_ENDPOINT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(order)
+          });
+        } catch (error) {
+          console.warn("Backend submit failed", error);
+        }
+      }
+
+      cart = [];
+      renderCart();
+      renderAdmin();
+      cartDrawer.classList.remove("open");
+      document.querySelectorAll(".client-form input").forEach(input => input.value = "");
+      showToast("提交成功，后台已记录");
+    }
+
+    function renderAdmin() {
+      const orders = getOrders();
+      const items = orders.flatMap(order => order.items.map(item => ({...item, order})));
+      const totalUnits = items.reduce((sum, item) => sum + item.qty, 0);
+      const totalAmount = items.reduce((sum, item) => sum + item.qty * item.price, 0);
+      const feedbackCount = items.filter(item => item.feedback).length + orders.filter(order => order.client.remark).length;
+
+      document.getElementById("backendNotice").textContent = BACKEND_ENDPOINT
+        ? "已配置在线提交接口，客户外部提交会同步到你的后台表格。"
+        : "当前是本机演示后台：数据保存在这台电脑的浏览器里。正式发客户前，需要把页面接入 Google 表格接口。";
+      document.getElementById("statOrders").textContent = orders.length;
+      document.getElementById("statUnits").textContent = totalUnits;
+      document.getElementById("statAmount").textContent = money(totalAmount);
+      document.getElementById("statFeedback").textContent = feedbackCount;
+
+      const rank = {};
+      items.forEach(item => {
+        const key = item.productId;
+        if (!rank[key]) rank[key] = {productId: item.productId, name: item.name, units: 0, amount: 0, colors: {}, feedback: []};
+        rank[key].units += item.qty;
+        rank[key].amount += item.qty * item.price;
+        rank[key].colors[item.color] = (rank[key].colors[item.color] || 0) + item.qty;
+        if (item.feedback) rank[key].feedback.push(item.feedback);
+      });
+
+      const rankRows = Object.values(rank).sort((a, b) => b.units - a.units);
+      document.getElementById("rankTable").innerHTML = `
+        <thead><tr><th>排名</th><th>款号</th><th>款名</th><th>件数</th><th>金额</th><th>热门颜色</th><th>反馈摘要</th></tr></thead>
+        <tbody>
+          ${rankRows.length ? rankRows.map((row, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${row.productId}</td>
+              <td>${row.name}</td>
+              <td>${row.units}</td>
+              <td>${money(row.amount)}</td>
+              <td>${Object.entries(row.colors).sort((a, b) => b[1] - a[1]).map(([color, qty]) => `${color} ${qty}`).join(" / ")}</td>
+              <td>${row.feedback.slice(0, 3).join("；") || "暂无"}</td>
+            </tr>
+          `).join("") : `<tr><td colspan="7">暂无提交记录</td></tr>`}
+        </tbody>
+      `;
+
+      document.getElementById("orderTable").innerHTML = `
+        <thead><tr><th>时间</th><th>客户码</th><th>客户</th><th>联系方式</th><th>城市</th><th>款式</th><th>颜色/尺码/数量</th><th>金额</th><th>款式意见</th><th>整体意见</th></tr></thead>
+        <tbody>
+          ${items.length ? items.map(item => `
+            <tr>
+              <td>${item.order.createdAt}</td>
+              <td>${item.order.visitorCode || item.order.client.accessCode || ""}</td>
+              <td>${item.order.client.name}<br>${item.order.client.shop || ""}</td>
+              <td>${item.order.client.contact}</td>
+              <td>${item.order.client.city || ""}</td>
+              <td>${item.productId}<br>${item.name}</td>
+              <td>${item.color} / ${item.size} / ${item.qty} 件</td>
+              <td>${money(item.qty * item.price)}</td>
+              <td>${item.feedback || ""}</td>
+              <td>${item.order.client.remark || ""}</td>
+            </tr>
+          `).join("") : `<tr><td colspan="10">暂无提交记录</td></tr>`}
+        </tbody>
+      `;
+    }
+
+    function exportCsv() {
+      const orders = getOrders();
+      const rows = [[
+        "订单号", "时间", "客户码", "客户姓名", "店铺/公司", "联系方式", "城市", "款号", "款名",
+        "风格", "衣长", "颜色", "尺码", "数量", "单价", "金额", "款式意见", "整体意见"
+      ]];
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          rows.push([
+            order.orderId, order.createdAt, order.visitorCode || order.client.accessCode || "",
+            order.client.name, order.client.shop, order.client.contact, order.client.city,
+            item.productId, item.name, item.style, item.length, item.color, item.size, item.qty, item.price,
+            item.price * item.qty, item.feedback, order.client.remark
+          ]);
+        });
+      });
+      const csv = rows.map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob(["\ufeff" + csv], {type: "text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "订货会客户选款统计.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener("click", event => {
+      const actionButton = event.target.closest("[data-action]");
+      if (actionButton) {
+        addToCart(actionButton.dataset.id, actionButton.dataset.action === "quick");
+      }
+      const removeButton = event.target.closest("[data-remove]");
+      if (removeButton) {
+        cart = cart.filter(item => item.lineId !== removeButton.dataset.remove);
+        renderCart();
+      }
+      const viewButton = event.target.closest("[data-view]");
+      if (viewButton) {
+        if (viewButton.dataset.view === "admin" && currentVisitor?.role !== "admin") {
+          showToast("统计后台需要管理员访问码");
+          return;
+        }
+        document.querySelectorAll("[data-view]").forEach(button => button.classList.remove("active"));
+        viewButton.classList.add("active");
+        const isAdmin = viewButton.dataset.view === "admin";
+        document.getElementById("productsView").style.display = isAdmin ? "none" : "block";
+        document.getElementById("adminView").classList.toggle("active", isAdmin);
+        renderAdmin();
+      }
+    });
+
+    document.getElementById("openCart").addEventListener("click", () => cartDrawer.classList.add("open"));
+    document.getElementById("closeCart").addEventListener("click", () => cartDrawer.classList.remove("open"));
+    document.getElementById("submitOrder").addEventListener("click", submitOrder);
+    document.getElementById("accessSubmit").addEventListener("click", verifyAccessCode);
+    document.getElementById("accessCodeInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") verifyAccessCode();
+    });
+    document.getElementById("exportCsv").addEventListener("click", exportCsv);
+    document.getElementById("clientName").addEventListener("input", updateWatermark);
+    document.getElementById("clientContact").addEventListener("input", updateWatermark);
+    document.getElementById("clearOrders").addEventListener("click", () => {
+      if (confirm("确定清空本机演示数据吗？")) {
+        setOrders([]);
+        renderAdmin();
+      }
+    });
+    searchInput.addEventListener("input", renderProducts);
+    styleFilter.addEventListener("change", renderProducts);
+    lengthFilter.addEventListener("change", renderProducts);
+    document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("dragstart", event => event.preventDefault());
+    document.addEventListener("copy", event => event.preventDefault());
+    document.addEventListener("cut", event => event.preventDefault());
+    document.addEventListener("selectstart", event => {
+      if (!event.target.matches("input, textarea")) event.preventDefault();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "PrintScreen" || (event.ctrlKey && event.key.toLowerCase() === "p")) {
+        showPrivacyMask(1800);
+      }
+    });
+    window.addEventListener("blur", () => showPrivacyMask(2000));
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") document.body.classList.add("masked");
+      if (document.visibilityState === "visible") showPrivacyMask(900);
+    });
+
+    initFilters();
+    const savedVisitor = getSavedVisitor();
+    if (savedVisitor?.code && ACCESS_CODES[savedVisitor.code]) {
+      applyVisitor(savedVisitor);
+    } else {
+      document.getElementById("accessCodeInput").focus();
+      document.querySelector('[data-view="admin"]').style.display = "none";
+    }
+    updateWatermark();
+    renderProducts();
+    renderCart();
+    renderAdmin();
+  </script>
+</body>
+</html>
+
